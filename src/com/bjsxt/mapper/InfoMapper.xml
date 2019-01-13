@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjsxt.mapper.InfoMapper">
+	<select id="selectAllInfo" resultType="Information">
+		SELECT * from information
+	</select>
+<!-- 按日期查询 -->
+	<select id="selectByTime" resultType="Information">
+		select *from information info where 1=1    
+		<if test="begintimetxt =='' and endtimetxt !=''"><!--..日期之前的  -->
+            and info.infotime &lt;=#{endtimetxt } 
+        </if>
+        <if test="begintimetxt !='' and endtimetxt ==''"><!--..日期之后的  -->
+            and info.infotime &gt;=#{begintimetxt } 
+        </if>
+        <if test="begintimetxt !='' and endtimetxt !='' and begintimetxt !=null and endtimetxt !=null ">
+           AND info.infotime &lt;=#{begintimetxt } AND info.infotime &gt;=#{begintimetxt }
+        </if>
+        <if test="checkstatus !='' and checkstatus !=null ">
+            and info.checkstatus like "%"#{checkstatus }"%"
+		</if>
+		<if test="infostatus !='' and checkstatus !=null">
+			 and info.infostatus like "%"#{infostatus }"%"
+		</if>
+             LIMIT #{startrow},#{pagesize}
+	</select>
+	<!--下拉菜单的查询  -->
+	<select id="selectDeptInfo" resultType="Dept">
+		SELECT *from dept
+	</select>
+	<select id="selectPtypeInfo" resultType="Position">
+		SELECT *from position
+	</select>
+	<select id="selectPtitleInfo" resultType="Ptitle">
+		SELECT *from ptitle
+	</select>
+	
+	<!--按编号查询  -->
+	<select id="findDeptById" resultType="Dept">
+		SELECT*from dept where deptno=#{deptno}
+	</select>
+	<select id="findPtypeById" resultType="Position">
+		SELECT *from position where posno=#{posno}
+	</select>
+	<select id="findPtitleById" resultType="Ptitle">
+		SELECT*from ptitle where ptno=#{ptno}
+	</select>
+<!--添加档案  -->
+	<insert id="insertInfo">
+	INSERT into information VALUES(#{infono},#{infoname},#{email},#{address},#{idcard},#{school},#{hospital},#{infostatus},#{sex},#{phone},#{homeaddress},
+	#{professional},#{politics},#{bank},#{uname},
+	#{education},#{bankno},#{infotime},#{information},
+	#{inforemark},#{infofile},#{photo},#{pname},
+	 #{posno},#{deptno},#{ptname},#{ptno},#{invalidtime},#{dsname},#{checkstatus},#{userno} )
+	</insert>
+<!--查询编号  --> 
+	<select id="selectInfoById" resultType="Information">
+		SELECT*from information where infono=#{infono}
+	</select>
+<!--查询审核历史  -->
+	<select id="selectApproveInfo" resultType="java.util.Map">
+	SELECT app.*,u.realname from approveinfo app join users u on app.userno=u.userno where app.infono=#{infono}
+	order by app.approtime
+	</select>
+<!--查询子集  -->
+	<select id="selectSonUsers" resultType="java.lang.Integer">
+		SELECT userno from users WHERE superno=#{userno}
+	</select>
+	
+<!--父级驳回的  -->
+	<select id="selectMyApproveFromSuper" resultType="Information">
+		select 
+		<include refid="columnSql"></include>
+		 from information  where 1=1 and  checkstatus='驳回' and userno=#{superno}  
+	</select>
+<!--下级报送的  -->
+	<select id="selectMyApproveSon" resultType="Information">
+	SELECT
+		<include refid="columnSql"></include>
+		FROM information 
+		 where 1=1 and checkstatus not like '审核通过' and userno in 
+		<foreach collection="list" item="userno" open="(" separator="," close=")" >
+			#{userno}
+		</foreach>
+
+	</select>
+	
+	<sql id="columnSql">
+        <trim suffixOverrides=",">
+            infono,infoname,infostatus,sex,infotime,inforemark, pname, checkstatus, invalidtime, dsname ,userno,uname, 
+        </trim>
+    </sql>
+<!-- 添加审核 表-->
+<insert id="addApprove">
+	INSERT into  approveinfo (infono,userno,approtime,checkstatus,infostatus,approdesc) VALUES(#{infono},#{userno},DATE_FORMAT(NOW(), '%Y-%m-%d %T'),#{checkstatus},#{infostatus},#{approdesc});
+</insert>
+<!-- 修改档案 -->
+	<update id="modifyInfo" >
+		update information set                           
+	    infoname=#{infoname}, 	email=#{email},    		address=#{address},                    
+		idcard=#{idcard},   	 school=#{school},    hospital=#{hospital}, 
+		 infostatus=#{infostatus},  sex=#{sex},       phone=#{phone}, 
+		 homeaddress=#{homeaddress}, professional=#{professional}, 
+		 politics=#{politics},  bank=#{bank},  uname=#{uname}, 
+		 userno=#{userno},  	education=#{education},    bankno=#{bankno}, 
+		 infotime=DATE_FORMAT(NOW(), '%Y-%m-%d %T%i%s'),  information=#{information},  inforemark=#{inforemark}, 
+		 infofile=#{infofile},   pname=#{pname},                        
+		 posno=#{posno},     	 deptno=#{deptno},   ptname=#{ptname}, 
+		 ptno=#{ptno},  		checkstatus=#{checkstatus},  invalidtime=#{invalidtime}, 
+		 dsname=#{dsname}                       
+		 where 1=1 and infono=#{infono}
+	</update>
+<delete id="deleteInforforerver">
+DELETE from information where infono=#{infono}
+</delete>
+
+<!--标记删除，变更等状态  -->
+	<update id="deleteInfo">
+		update information set uname=#{uname},userno=#{userno},checkstatus=#{checkstatus} where 1=1 and infono=#{infono}
+	</update>
+<!--  拿取照片-->
+	<select id="selectPhotoByInfoname" resultType="string">
+	SELECT info.photo from information info where info.infoname=#{realname}
+	</select>
+<!--  分页查询总行数-->
+	<select id="selectAllPage" resultType="int">
+		SELECT COUNT(*)from information
+	</select>
+	<!-- 分页查询每页的数据 -->
+	<select id="selectCurrPage" resultType="Information">
+		SELECT *from information LIMIT #{startrow},#{pagesize}
+	</select>
+	
+	<!-- 按日期查询总条数 -->
+	<select id="selectPageByTime" resultType="int">
+		select COUNT(*) from information info where 1=1    
+		<if test="begintimetxt =='' and endtimetxt !=''"><!--..日期之前的  -->
+            and info.infotime &lt;=#{endtimetxt } 
+        </if>
+        <if test="begintimetxt !='' and endtimetxt ==''"><!--..日期之后的  -->
+            and info.infotime &gt;=#{begintimetxt } 
+        </if>
+        <if test="begintimetxt !='' and endtimetxt !='' and begintimetxt !=null and endtimetxt !=null ">
+           AND info.infotime &lt;=#{begintimetxt } AND info.infotime &gt;=#{begintimetxt }
+        </if>
+        <if test="checkstatus !='' and checkstatus !=null ">
+            and info.checkstatus like "%"#{checkstatus }"%"
+		</if>
+		<if test="infostatus !='' and checkstatus !=null">
+			 and info.infostatus like "%"#{infostatus }"%"
+		</if>
+	</select>
+	
+	<!-- 饼图-部门汇总 -->
+	<select id="selectPieByDept" resultType="string">
+		SELECT info.dsname from information info GROUP BY info.dsname
+	</select>
+	<select id="selectPieNum" resultType="int">
+		SELECT COUNT(info.infono)count from information info GROUP BY info.dsname
+	</select>
+	<select id="selectBar" resultType="java.util.Map">
+		SELECT COUNT(info.infono)count,info.dsname from information info GROUP BY info.dsname
+	</select>
+</mapper>

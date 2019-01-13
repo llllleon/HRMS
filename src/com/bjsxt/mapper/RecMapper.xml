@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjsxt.mapper.RecMapper">
+	<!-- 查询部门名称 -->
+	<select id="selectDeptname" resultType="dept">
+		select distinct dsname,deptno from dept
+	</select>
+	<!-- 查询招聘种类 -->
+	<select id="selectRectype" resultType="recruitment">
+		select distinct recno,rectype from recruitment
+	</select>
+	<!-- 查询岗位名称 -->
+	<select id="selectPname" resultType="position">
+		select distinct pname from position
+	</select>
+	<!-- 根据pname查询其他信息 -->
+	<select id="selectP" resultType="position">
+		select distinct posno,ptype from position where pname=#{pname}
+	</select>
+	<!-- 添加招聘信息 -->
+	<insert id="insertRec">
+		insert into recruitment (dsname,rectype,pname,recnum,posno,postype,uname,rectime,endtime,recdesc,requirement) values(#{dsname},#{rectype},#{pname},#{recnum},#{posno},#{postype},#{uname},#{rectime},#{endtime},#{recdesc},#{requirement})
+	</insert>
+	<!-- 查询所有的招聘信息 -->
+	<select id="selectAllRec" resultType="recruitment">
+		select* from recruitment group by dsname,rectype,pname,recnum,posno,postype,uname,rectime,endtime,recdesc,requirement  order by recno
+	</select>
+	<!-- 删除当前行 -->
+	<delete id="deleteRec">
+		delete from recruitment where recno=#{recno}<!--  or recno=#{recno1} -->
+	</delete>
+	
+	<!-- 模糊查询 -->
+	<select id="selectMyRec" resultType="recruitment">
+		select* from recruitment where 1=1
+		<if test="#{rectype}!=null">
+			and rectype like "%"#{rectype}"%"
+		</if>
+		<if test="#{pname}!=null">
+			and pname like "%"#{pname}"%"
+		</if>
+		
+	</select>
+	
+	<!-- 模糊查询条数 -->
+	<select id="selectSomeRowNum" resultType="int">
+		select count(recno) from recruitment where 1=1
+		<if test="#{rectype}!=null">
+			and rectype like concat("%",#{rectype},"%")
+		</if>
+		<if test="#{pname}!=null">
+			and pname like concat("%",#{pname},"%")
+		</if>
+		
+	</select>
+	<!-- 查询所有的条数 -->
+	<select id="selectRowNum" resultType="int">
+		select count(recno) FROM recruitment
+	</select>
+	<!-- 查询Echarts -->
+	<select id="selectRecEcharts" resultType="recruitment">
+		select pname,recnum from recruitment
+	</select>
+</mapper>

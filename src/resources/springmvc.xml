@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/security
+		http://www.springframework.org/schema/security/spring-security.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd">
+   	<!-- 注册组建扫描 -->
+    <context:component-scan base-package="com.bjsxt.web.controller"></context:component-scan>
+   <!-- 注册注解驱动 -->
+   <mvc:annotation-driven/>
+  	<!-- 视图解析器 -->
+  	<mvc:view-resolvers>
+  		<bean id="resourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+  			<property name="prefix" value="/WEB-INF/jsp/"></property>
+  			<property name="suffix" value=".jsp"></property>
+  		</bean>
+  	</mvc:view-resolvers>
+  	  <!-- 多部分数据解析器 -->
+ 	<bean id="multipartResolver" 
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10485760"></property>
+		<property name="maxInMemorySize" value="1024"></property>
+		<property name="defaultEncoding" value="UTF-8"></property>
+	</bean> 
+  	
+  	
+  	<!-- 静态资源映射器
+  		拦截器
+  		文件上传下载，多部分解析器
+  	 -->
+  	<!-- 静态资源映射器 -->
+	<mvc:resources location="/js/" mapping="/js/**"></mvc:resources>
+	<mvc:resources location="/css/" mapping="/css/**"></mvc:resources>
+	<mvc:resources location="/img/" mapping="/img/**"></mvc:resources>
+	<mvc:resources location="/lib/" mapping="/lib/**"></mvc:resources>
+	<mvc:resources location="/static/" mapping="/static/**"></mvc:resources>
+	<mvc:resources location="/layui/" mapping="/layui/**"></mvc:resources>
+	<!-- 拦截器 -->
+	<bean class="com.bjsxt.web.interceptor.LogInterceptor" id="intceptor"></bean>
+	<mvc:interceptors>
+		<!-- 日志记录 -->
+		<mvc:interceptor>
+			<mvc:mapping path="/**"/>
+			<mvc:exclude-mapping path="/js/**"/>
+			<mvc:exclude-mapping path="/css/**"/>
+			<mvc:exclude-mapping path="/img/**"/>
+			<mvc:exclude-mapping path="/lib/**"/>
+			<mvc:exclude-mapping path="/static/**"/>
+			<mvc:exclude-mapping path="/layui/**"/>
+			<ref bean="intceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+</beans>

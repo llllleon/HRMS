@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjsxt.mapper.LogMapper">
+	<!-- 登录验证 -->
+	<select id="selectUsersForLog" resultType="Users">
+		select * from users
+		where uname=#{uname} and pwd=#{pwd}
+	</select>
+
+	<!-- 登陆日志添加 -->
+	<insert id="insertLoginInfo">
+		insert into login
+		values(default,#{lasttime},#{logip},#{logname})
+	</insert>
+	<!-- 上次登录信息显示 -->
+	<select id="selectLogInfo" resultType="Login">
+		select * from login where
+		logid=(select max(logid) from login)-1
+	</select>
+	<!-- 查看登陆日志 -->
+	<select id="selectLogList" resultType="int">
+		select count(*) from login l join users u on u.uname=l.logname 
+		left join position p on p.posno = u.posno
+	</select>
+	<!-- 查看登陆日志,分页 -->
+	<select id="selectLogListByPage" resultType="java.util.Map">
+		select
+		l.logid,l.logip,l.lasttime,l.logname,u.realname,p.pname
+		from login l
+		join users u
+		on u.uname=l.logname left join position p on p.posno =
+		u.posno
+		order by logid desc limit #{0},#{1}
+	</select>
+	<!-- 模糊查询 -->
+	<select id="selectLogByCondition" resultType="int">
+		select count(*) from
+		login l join users u on u.uname=l.logname
+		left join
+		position p on
+		p.posno = u.posno
+		<where>
+			<if test="logname != null and logname.length()>0">
+				and l.logname like CONCAT('%',#{logname},'%')
+			</if>
+			<if test="beginTime != null and beginTime.length()>0">
+				and lasttime &gt; #{beginTime}
+			</if>
+			<if test="endTime != null and endTime.length()>0">
+				and lasttime &lt; #{endTime}
+			</if>
+		</where>
+	</select>
+	<!-- 模糊查询+分页实现 -->
+	<select id="selectLogByConditionWithPage" resultType="java.util.Map">
+		select l.logid,l.logip,l.lasttime,l.logname,u.realname,p.pname from
+		login l join users u on u.uname=l.logname
+		left join position p on
+		p.posno = u.posno
+		<where>
+			<if test="logname != null and logname.length()>0">
+				and l.logname like CONCAT('%',#{logname},'%')
+			</if>
+			<if test="beginTime != null and beginTime.length()>0">
+				and lasttime &gt; #{beginTime}
+			</if>
+			<if test="endTime != null and endTime.length()>0">
+				and lasttime &lt; #{endTime}
+			</if>
+		</where>
+		order by logid desc limit #{index},#{count}
+	</select>
+	<!-- 权限菜单查询 -->
+	<select id="selectUserRoleMenu" resultType="java.util.Map">
+		SELECT u.uname,r.rolname,m.menuid,m.menuname,m.fatherid,m.url 
+			from users u join role r on u.posno=r.posno
+			join `role-menu` rm on r.rolid=rm.rolid
+			join menu m on m.menuid=rm.menuid
+			where u.uname=#{uname}
+	</select>
+</mapper>

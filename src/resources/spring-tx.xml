@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/security
+		http://www.springframework.org/schema/security/spring-security.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd">
+    <!-- 事务的处理 -->
+   <!-- 配置切面 -->
+   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+   	<property name="dataSource" ref="dataSource"></property>
+   </bean>
+   <!-- 设置事务的传播行为 -->
+   <tx:advice id="txAdivce" transaction-manager="transactionManager">
+   	<tx:attributes>
+   		<tx:method name="addSalStand" rollback-for="com.bjsxt.util.MyException"
+   			propagation="REQUIRED"/>
+   		<tx:method name="modifySalStandAudit" rollback-for="com.bjsxt.util.MyException"
+   			propagation="REQUIRED"/>
+   		<tx:method name="login" rollback-for="java.lang.Exception"
+   			propagation="REQUIRED"/>
+   		<tx:method name="modify*" rollback-for="com.bjsxt.util.MyException"
+   			propagation="REQUIRED"/>
+   		<tx:method name="add*" rollback-for="com.bjsxt.util.MyException"
+   			propagation="REQUIRED"/>
+   		<tx:method name="drop*" rollback-for="com.bjsxt.util.MyException"
+   			propagation="REQUIRED"/>
+   		<tx:method name="*" read-only="true"/>
+   	</tx:attributes>
+   </tx:advice>
+   <!-- 织入 -->
+   <aop:config>
+   <!-- 配置切点 -->
+   	<aop:pointcut expression="execution(* com.bjsxt.service.impl.*.*(..))" id="myPoiontcut"/>
+   	<aop:advisor advice-ref="txAdivce" pointcut-ref="myPoiontcut"/>
+   </aop:config>
+</beans>

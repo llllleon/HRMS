@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjsxt.mapper.UsersMapper">
+	<!-- 查询全部用户 -->
+	<select id="selectUsers"  resultType="Users">
+		select * from users
+	</select>
+	<!-- 根据条件模糊查询  -->
+	<select id="selectUsersByArgs" resultType="Users">
+		select * from users where 1=1
+		<if test="userno!=null">
+			and userno like  concat('%',#{userno},'%')
+		</if>
+		<!-- 小于等于 lte 大于等于 gte  小于 lt 大于 gt 等于 eq 不等于 neq-->
+		<if test="uname!=null and uname.length() gt 0">
+			and uname like concat('%',#{uname},'%')
+		</if>
+		<if test="posno!=null and posno!='' ">
+			and posno like concat('%',#{posno},'%')
+		</if>
+	</select>
+	<!-- 统计根据条件查询的条数 -->
+	<select id="selectCountByArgs" resultType="int">
+		select count(userno) from users where 1=1
+		<if test="userno!=null">
+			and userno like  concat('%',#{userno},'%')
+		</if>
+		<!-- 小于等于 lte 大于等于 gte  小于 lt 大于 gt 等于 eq 不等于 neq-->
+		<if test="uname!=null and uname.length() gt 0">
+			and uname like concat('%',#{uname},'%')
+		</if>
+		<if test="posno!=null and posno!='' ">
+			and posno like concat('%',#{posno},'%')
+		</if>
+	</select>
+	<!-- 统计查询总条数 -->
+	<select id="selectCountAll" resultType="int">
+			select count(userno) from users
+	</select>
+	<!-- 根据主键删除 -->
+	<delete id="deleteByUserno">
+		delete from users where userno=#{userno}
+	</delete>
+	<!-- 新增用户 -->
+	<insert id="insertUsers">
+		insert into users(uname,pwd,phone,posno,
+				deptno,userdesc,realname,superno)
+		 values(#{uname},#{pwd},#{phone},#{posno},
+		 #{deptno},#{userdesc},#{realname},#{superno})
+	</insert>
+	<!-- 查询上级领导 -->
+	<select id="selectSuperno" resultType="Users">
+		select userdesc,superno from users 
+		where  uname != 'admin' and superno=-1 or superno=1 or superno=2 
+	</select>
+	<!-- 查询用户描述 -->
+	<select id="selectUserDesc" resultType="Users">
+		select userdesc from users	where uname != 'admin'
+	</select>
+	<!-- 根据用户描述查询职位编号 部门编号  -->
+	<select id="selectByDesc" resultType="Users">
+		select posno,deptno from users where userdesc=#{userdesc}
+	</select>
+	<!-- 查询用户名是否重复 -->
+	<select id="selectUname" resultType="Users">
+		select uname from users where uname=#{uname}
+	</select>
+</mapper>

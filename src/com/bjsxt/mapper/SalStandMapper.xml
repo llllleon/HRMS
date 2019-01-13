@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	<mapper namespace="com.bjsxt.mapper.SalStandMapper">
+	<!-- 查询所有薪资标准 -->
+		<select id="selectAllSalStand" resultType="SalStand">
+			select * from salstandard
+		</select>
+		<select id="selectSalStandName" resultType="Ptitle">
+			select ptname from ptitle
+		</select>
+	<!-- 查询薪资标准制定人名单 -->
+		<select id="selectCreatno" resultType="Users">
+			<!-- 通过判断岗位编号，保证薪酬主任排在首位 -->
+			select DISTINCT(u.uname),u.posno,u.realname,u.userdesc from users u 
+			where posno=1 or posno =3 ORDER BY u.posno DESC
+		</select>
+	<!-- 两表插入 -->
+		<!-- 查找明细表下一个自增的主键值 -->
+		<select id="selectNextItemId" resultType="string">
+			select auto_increment nextid from information_schema.TABLES
+				where table_name='salstandarditem'
+				and TABLE_SCHEMA='hrms'
+		</select>
+		<!-- 插入明细表 -->
+		<insert id="insertSalStandItem">
+			insert into salstandarditem (base,comm,traffic,mobile
+				,eat,house,travel,overwork,subtract) values (
+				#{base},#{comm},#{traffic},#{mobile},#{eat},#{house},
+				#{travel},#{overwork},#{subtract})
+		</insert>
+		<!-- 插入标准表 -->
+		<insert id="insertSalStand">
+			insert into salstandard (standname,standsum,creatno,uname,standtime,
+				salupdate,salaudit,status,salitemno) values (
+				#{standname},#{standsum},#{creatno},#{uname},#{standtime},
+				#{salupdate},#{salaudit},#{status},#{salitemno})
+		</insert>
+	<!-- 条件查询 -->
+		<select id="selectStandByCondition"  resultType="SalStand">
+			select * from salstandard
+			<where>
+				<if test="standno != null and standno.length()>0">
+					and standno like "%" #{standno} "%"
+				</if>
+				<if test="beginTime != null and beginTime.length()>0">
+					and standtime &gt; #{beginTime}
+				</if>
+				<if test="endTime != null and endTime.length()>0">
+					and standtime &lt; #{endTime}
+				</if>
+				<!-- <if test="salaudit != null and salaudit.length()>0"> -->
+				<choose>
+					<when test="salaudit==1">
+						and salaudit ="审核中"</when>
+					<when test="salaudit==2">
+						and salaudit ="起草"</when>
+					<when test="salaudit==3">
+						and salaudit ="通过"</when>
+					<when test="salaudit==4">
+						and salaudit ="驳回"</when>
+					<otherwise></otherwise>
+				</choose>
+				<!-- </if> -->
+			</where>
+		</select>
+	<!-- 查询薪酬标准明细 -->
+	<!-- <resultMap type="SalStand" id="salStandItemMap">
+		<id property="standno" column="standno"/>
+		<result property="standname" column="standname"/>
+		<result property="standsum" column="standsum"/>
+		<result property="creatno" column="creatno"/>
+		<result property="uname" column="uname"/>
+		<result property="standtime" column="standtime"/>
+		<result property="salaudit" column="salaudit"/>
+		<association property="item" javaType="SalStandItem">
+			<result property="base" column="base"/>
+			<result property="comm" column="comm"/>
+			<result property="traffic" column="traffic"/>
+			<result property="mobile" column="mobile"/>
+			<result property="eat" column="eat"/>
+			<result property="house" column="house"/>
+			<result property="travel" column="travel"/>
+			<result property="overwork" column="overwork"/>
+		</association>
+	</resultMap>
+	<select id="selectSalStandItem" resultMap="salStandItemMap">
+		select s1.standno,s1.standname,s1.standsum,s1.creatno,s1.uname,
+			s1.standtime,s1.salaudit,s2.base,s2.comm,s2.traffic,s2.mobile,
+			s2.eat,s2.house,s2.travel,s2.overwork
+			from salstandard s1 JOIN salstandarditem s2 on s1.salitemno=s2.salitemno
+			where s1.standno=#{standno}
+	</select> -->
+	<select id="selectSalStandById" resultType="SalStand">
+		<!-- select s1.standno,s1.standname,s1.standsum,s1.creatno,
+			s1.uname,s1.standtime,s1.salaudit,s1.salitemno
+			from salstandard s1 where s1.standno=#{standno} -->
+		select s1.standno,s1.standname,s1.standsum,
+			s1.standtime,s1.salaudit,s1.salitemno,u.realname creatno,u1.realname uname
+			from salstandard s1 join users u on s1.creatno=u.uname
+			join users u1 on u1.uname=s1.uname
+			where s1.standno=#{standno}
+	</select>
+	<select id="selectSalStandItemById" resultType="SalStandItem">
+		select s2.base,s2.comm,s2.traffic,s2.mobile,s2.eat,s2.house,
+			s2.travel,s2.overwork from salstandarditem s2
+			where s2.salitemno=#{salitemno}
+	</select>
+	<!-- 审核薪酬标准 -->
+	<!-- 审核标准表 -->
+	<update id="updateStandToAudit">
+		update salstandard set standsum=#{standsum},salupdate=#{salupdate},
+			salaudit=#{salaudit}
+			where standno=#{standno}
+	</update>
+	<!-- 审核明细表 -->
+	<update id="updateStandItemToAudit">
+		update salstandarditem set base=#{base},comm=#{comm},traffic=#{traffic},
+			mobile=#{mobile},eat=#{eat},house=#{house},
+			travel=#{travel},overwork=#{overwork}
+			where salitemno=#{salitemno}
+	</update>
+	<!-- 删除标准表 -->
+	<delete id="deleteSalStand">
+		delete from salstandard 
+		<where>
+			standno=#{standno}
+		</where>
+	</delete>
+	<!-- 删除明细表 -->
+	<delete id="deleteSalStandItem">
+		delete from salstandarditem 
+		<where>
+			salitemno=#{salitemno}
+		</where>
+	</delete>
+	<!-- 导出之前的查询 -->
+	<select id="selectAllForExport" resultType="java.util.Map">
+		select s1.standno,s1.standname,s1.standsum,u.realname creatno,u1.realname uname,
+			s1.standtime,s1.salaudit,s2.base,s2.comm,s2.traffic,s2.mobile,
+			s2.eat,s2.house,s2.travel,s2.overwork
+			from salstandard s1 JOIN salstandarditem s2 on s1.salitemno=s2.salitemno
+			JOIN users u on u.uname=s1.creatno
+			JOIN users u1 on u1.uname=s1.uname
+	</select>
+	<!-- 查询各岗位薪资中的最高值 -->
+	<select id="selectAllPosMax"  resultType="SalStand">
+		select max(standsum) standsum,standname from salstandard GROUP BY standname
+		  order by standsum  desc 
+	</select>	
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	</mapper>
